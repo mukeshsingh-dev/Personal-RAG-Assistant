@@ -22,10 +22,7 @@ def load_documents(docs_path: str | Path = "./docs"):
     path.mkdir(parents=True, exist_ok=True)
     documents = []
     for file_path in sorted(path.rglob("*")):
-        if (
-            not file_path.is_file()
-            or file_path.suffix.lower() not in SUPPORTED_SUFFIXES
-        ):
+        if not file_path.is_file() or file_path.suffix.lower() not in SUPPORTED_SUFFIXES:
             continue
         loader = (
             PyPDFLoader(str(file_path))
@@ -39,9 +36,7 @@ def load_documents(docs_path: str | Path = "./docs"):
 def split_documents(documents, chunk_size: int = 1000, chunk_overlap: int = 200):
     if chunk_size <= chunk_overlap:
         raise ValueError("chunk_size must be greater than chunk_overlap")
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size, chunk_overlap=chunk_overlap
-    )
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     return splitter.split_documents(documents)
 
 
@@ -51,8 +46,7 @@ def create_vectorstore(
     if not chunks:
         raise ValueError("At least one document chunk is required")
     embeddings = HuggingFaceEmbeddings(
-        model_name=embedding_model
-        or os.getenv("RAG_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+        model_name=embedding_model or os.getenv("RAG_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
     )
     return Chroma.from_documents(
         chunks,
@@ -66,12 +60,8 @@ def build_chain(vectorstore, top_k: int = 4):
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY is not set")
-    memory = ConversationBufferWindowMemory(
-        memory_key="chat_history", return_messages=True, k=10
-    )
-    llm = ChatAnthropic(
-        model="claude-sonnet-4-20250514", temperature=0.3, api_key=api_key
-    )
+    memory = ConversationBufferWindowMemory(memory_key="chat_history", return_messages=True, k=10)
+    llm = ChatAnthropic(model="claude-sonnet-4-20250514", temperature=0.3, api_key=api_key)
     return ConversationalRetrievalChain.from_llm(
         llm,
         retriever=vectorstore.as_retriever(search_kwargs={"k": top_k}),

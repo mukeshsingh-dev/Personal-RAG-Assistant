@@ -21,9 +21,7 @@ def test_load_documents_and_split(tmp_path: Path):
 
 def test_split_rejects_invalid_overlap():
     try:
-        split_documents(
-            [Document(page_content="text")], chunk_size=10, chunk_overlap=10
-        )
+        split_documents([Document(page_content="text")], chunk_size=10, chunk_overlap=10)
     except ValueError as error:
         assert "chunk_size" in str(error)
     else:
